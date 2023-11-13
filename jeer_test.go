@@ -23,4 +23,6 @@ func TestJeer(t *testing.T) {
     actual := []int{1,2,3}
     expected := []int{1,2,3}
     Test[int](t).IsList().Actual(actual...).Expected(expected...).Run("test int slice")
+    
+    Test[string](t).Actual().Expected().Run("test fail both inputs")
 }
