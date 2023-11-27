@@ -20,9 +20,28 @@ func TestJeer(t *testing.T) {
     bList := []int{1,5,3,7,9}
     Test[int](t).IsList().Actual(bList...).Expected(aList...).Run("test int slice should fail")
 
+    aList = []int{1,3,5,7,9}
+    bList = []int{1,5,7,3,9}
+    Test[int](t).IsList().AnyOrder().Actual(bList...).Expected(aList...).Run("test int slice should work (anyorder)")
+
+    aList = []int{1,3,5,7,9}
+    bList = []int{1,5,7,9}
+    Test[int](t).IsList().AnyOrder().Actual(bList...).Expected(aList...).Run("test int slice should fail (anyorder)")
+
     actual := []int{1,2,3}
     expected := []int{1,2,3}
     Test[int](t).IsList().Actual(actual...).Expected(expected...).Run("test int slice")
+
+    actual = []int{1,2,3}
+    expected = []int{1,2,3}
+    err = errors.New("this thing failed or something")
+    Test[int](t).IsList().Actual(actual...).Expected(expected...).FailOn(err).Run("test int slice should fail, added FailOn(err)")
+
+    actual = []int{1,2,3}
+    expected = []int{3,1,2}
+    err = nil
+    Test[int](t).IsList().AnyOrder().Actual(actual...).Expected(expected...).FailOn(err).Run("test int slice should work, added FailOn(nil)")
     
-    Test[string](t).Actual().Expected().Run("test fail both inputs")
+    Test[string](t).Actual().Expected().Run("test fail both inputs single")
+    Test[string](t).IsList().Actual().Expected().Run("test both inputs as empty lists should work")
 }

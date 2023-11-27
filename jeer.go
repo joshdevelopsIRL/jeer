@@ -7,6 +7,7 @@ import (
 
 var ERR_NO_ACTUAL = errors.New("invalid 'actual' value given")
 var ERR_NO_EXPECTED = errors.New("invalid 'expected' value given")
+var ERR_NOT_LIST = errors.New("invalid inputs not declared as a list (slice) - must chain Jeer.IsList()")
 
 type Jeer[T comparable] struct {
     tester *testing.T
@@ -16,6 +17,7 @@ type Jeer[T comparable] struct {
     err error
     inputErrs []error
     isList bool
+    anyOrder bool
     actualList []T
     expectedList []T
 }
@@ -31,6 +33,14 @@ func Test[T comparable] (t *testing.T) *Jeer[T] {
 
 func (j *Jeer[T]) IsList() *Jeer[T] {
     j.isList = true
+    return j
+}
+
+func (j *Jeer[T]) AnyOrder() *Jeer[T] {
+    if !j.isList {
+        j.inputErrs = append(j.inputErrs, ERR_NOT_LIST)
+    }
+    j.anyOrder = true
     return j
 }
 
@@ -65,7 +75,29 @@ func (j *Jeer[T]) Expected(v ...T) *Jeer[T] {
     return j
 }
 
+func (j *Jeer[T]) isIn(list []T, val T) bool {
+    for i := range list {
+        if val == list[i] {
+            return true
+        }
+    }
+    return false
+}
+
 func (j *Jeer[T]) compareLists(a, b []T) bool {
+    if j.anyOrder {
+        for i := range b {
+            if !j.isIn(a, b[i]) {
+                return false
+            }
+        }
+        for i := range a {
+            if !j.isIn(b, a[i]) {
+                return false
+            }
+        }
+        return true
+    }
     if len(a) == len(b) {
         for i := range a {
             if a[i] != b[i] {
@@ -81,7 +113,7 @@ func (j *Jeer[T]) Run(name string) *Jeer[T] {
     j.name = name
     j.tester.Run(name, func(t *testing.T) {
         if j.err != nil {
-            t.Fatalf("error '%v' | wanted '%v'", j.err, j.expected)
+            t.Fatalf("fail on error '%v'", j.err)
         }
         if len(j.inputErrs) > 0 {
             t.Fatalf("input error [%v]", j.inputErrs)
